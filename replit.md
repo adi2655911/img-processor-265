@@ -1,144 +1,148 @@
 # Image Processor 265
 
 ## Overview
+Image Processor 265 is a professional-grade image processing web application built with a stunning dark mode interface and vibrant electric blue (#00D9FF) accents. The application allows users to upload images, apply various transformations, and download the processed results.
 
-Image Processor 265 is a professional web-based image processing utility that enables users to upload, transform, and download images with various processing options. The application supports JPG, PNG, and WebP formats and provides features including format conversion, resizing with aspect ratio control, and background removal. Built with a modern tech stack, it emphasizes workflow clarity and real-time visual feedback through a clean, dark-mode interface inspired by Linear and Figma's technical aesthetics.
+## Features
+- **Drag-and-drop Image Upload**: Intuitive upload interface with visual feedback
+- **Format Conversion**: Convert between JPG, JPEG, PNG, and WebP formats
+- **Image Resizing**: Custom width/height adjustments with aspect ratio locking
+- **Background Removal**: Remove image backgrounds (basic implementation)
+- **Real-time Preview**: Side-by-side comparison of original and processed images
+- **One-click Download**: Download processed images with appropriate file extensions
+- **Auto-cleanup**: Automatic deletion of temporary files after 30 minutes of inactivity
 
-## User Preferences
+## Project Structure
 
-Preferred communication style: Simple, everyday language.
+### Frontend (`client/`)
+- **pages/home.tsx**: Main application page with upload, processing controls, and preview
+- **components/image-upload-zone.tsx**: Drag-and-drop upload component with file validation
+- **components/processing-controls.tsx**: Format conversion, resize options, and background removal controls
+- **components/image-preview.tsx**: Side-by-side image preview with download functionality
+- **index.css**: Dark mode color system with electric blue accents
+- **App.tsx**: Main application component with routing
 
-## System Architecture
+### Backend (`server/`)
+- **routes.ts**: Express API routes for image processing
+  - POST /api/process - Process uploaded images with Sharp library
+  - GET /api/health - Health check endpoint
+- **storage.ts**: Minimal storage interface (not used for image processing)
 
-### Frontend Architecture
+### Shared (`shared/`)
+- **schema.ts**: TypeScript types and Zod schemas for image processing options
 
-**Framework & Build System:**
-- React 18 with TypeScript for type-safe component development
-- Vite as the build tool and development server with hot module replacement
-- Wouter for lightweight client-side routing
-- React Query (@tanstack/react-query) for server state management and API interactions
+## Technology Stack
+- **Frontend**: React, TypeScript, Wouter (routing), TanStack Query
+- **Backend**: Express.js, Sharp (image processing), Multer (file uploads)
+- **Styling**: Tailwind CSS with custom dark mode theme
+- **UI Components**: Shadcn/ui component library
 
-**UI Component System:**
-- Shadcn/ui component library based on Radix UI primitives
-- Tailwind CSS for utility-first styling with custom design tokens
-- Custom theme system supporting dark mode with electric blue accents (#00D9FF)
-- Form handling via React Hook Form with Zod validation resolvers
+## Design System
+- **Primary Color**: Electric Blue (#00D9FF / hsl(191, 100%, 50%))
+- **Background**: Deep charcoal (hsl(222, 14%, 8%))
+- **Cards**: Elevated surfaces (hsl(222, 10%, 16%))
+- **Text**: High contrast white (95% lightness) with secondary and tertiary levels
+- **Font**: Inter for clean, technical readability
+- **Borders**: Subtle divisions (hsl(222, 8%, 24%))
 
-**State Management:**
-- Local component state for UI interactions (file uploads, processing controls)
-- React Query for caching and synchronizing server-processed images
-- File handling through browser File API and Blob URLs for image previews
+## File Handling
+- **Accepted Formats**: JPG, JPEG, PNG, WebP
+- **Maximum File Size**: 10MB
+- **Upload Directory**: `/uploads` (auto-created)
+- **Output Directory**: `/outputs` (auto-created)
+- **Cleanup Interval**: Every 5 minutes
+- **File Retention**: 30 minutes
 
-**Design System:**
-- Typography: Inter font family from Google Fonts
-- Color palette: Dark mode foundation (HSL-based) with electric blue primary accent
-- Spacing: Tailwind's standardized units (2, 4, 6, 8, 12, 16)
-- Layout: Responsive two-column grid (40% controls / 60% preview on desktop)
+## Image Processing Features
 
-### Backend Architecture
+### Format Conversion
+- Convert images between JPG, JPEG, PNG, and WebP formats
+- Quality setting: 90% for all formats
+- Automatic file extension handling
 
-**Server Framework:**
-- Express.js for HTTP server and middleware handling
-- TypeScript throughout for consistency with frontend
-- Custom logging middleware for API request tracking
+### Resize
+- Custom width and height inputs
+- Aspect ratio locking (optional)
+- Fit mode: 'inside' (proportional scaling) or 'fill' (exact dimensions)
 
-**Image Processing Pipeline:**
-- Multer for multipart form data and file upload handling
-- Sharp library for high-performance image transformations (resize, format conversion)
-- File system-based storage with automatic cleanup of processed files (30-minute TTL)
+### Background Removal
+- Basic background removal using Sharp's alpha channel manipulation
+- Flattens image to white background after alpha removal
 
-**API Design:**
-- RESTful endpoint structure (`/api/process` for image processing)
-- FormData-based uploads with JSON-encoded processing options
-- Streaming binary responses for processed images
-- File size limits (10MB max) and MIME type validation
+## Memory Management
+- Proper object URL cleanup for original and processed images
+- URLs revoked when:
+  - Uploading a new image
+  - Processing a new version
+  - Resetting the form
+  - Component unmounts
+- Prevents memory leaks in long-running sessions
 
-**File Management:**
-- Temporary storage in `/uploads` and `/outputs` directories
-- Unique filename generation using timestamps and random suffixes
-- Automatic cleanup mechanism to prevent disk space accumulation
+## Error Handling
+- File type validation with user-friendly toast notifications
+- File size validation (10MB maximum)
+- Processing error feedback
+- Download error handling
+- Network error recovery
 
-### Data Storage Solutions
+## Recent Changes (October 19, 2025)
+- Implemented complete MVP with all core features
+- Added dark mode design system with electric blue accents
+- Implemented proper object URL cleanup to prevent memory leaks
+- Added comprehensive error handling with toast notifications
+- Created responsive layout for desktop, tablet, and mobile devices
+- Integrated Sharp library for high-quality image processing
+- Added automatic cleanup system for temporary files
 
-**Current Implementation:**
-- In-memory storage via `MemStorage` class for user data (if authentication is added)
-- File system storage for uploaded and processed images
-- No persistent database currently configured
+## User Experience
+- Beautiful loading states during image processing
+- Success and error toast notifications for all operations
+- Responsive design that works flawlessly across all breakpoints
+- Smooth transitions and hover effects
+- Intuitive drag-and-drop interface
+- Clear visual hierarchy with professional design
 
-**Database Configuration:**
-- Drizzle ORM configured for PostgreSQL integration
-- Schema defined in `shared/schema.ts` for potential future use
-- Connection via Neon Database serverless driver (@neondatabase/serverless)
-- Migration system configured through drizzle-kit
+## Running the Application
+The application runs on port 5000 with:
+- Express server handling API requests
+- Vite dev server for frontend development
+- Hot module replacement for rapid development
+- Automatic workflow restart on file changes
 
-### Authentication & Authorization
+## API Documentation
 
-**Current State:**
-- No authentication system currently implemented
-- User schema defined in shared types (username-based)
-- Session management infrastructure in place (connect-pg-simple for future use)
+### POST /api/process
+Process an uploaded image with specified options.
 
-**Prepared Infrastructure:**
-- User model with ID and username fields
-- Storage interface ready for user CRUD operations
-- Session store configuration for Express sessions
+**Request:**
+- Content-Type: multipart/form-data
+- Fields:
+  - `image`: Image file (required)
+  - `options`: JSON string with processing options (required)
 
-### Design Patterns
+**Processing Options:**
+```typescript
+{
+  format?: 'jpg' | 'jpeg' | 'png' | 'webp',
+  width?: number,
+  height?: number,
+  maintainAspectRatio?: boolean,
+  removeBackground?: boolean
+}
+```
 
-**Validation & Type Safety:**
-- Zod schemas for runtime validation of image processing options
-- Shared types between frontend and backend via `@shared` alias
-- Drizzle-zod integration for database schema validation
+**Response:**
+- Content-Type: image/jpeg | image/png | image/webp
+- Body: Processed image blob
 
-**Error Handling:**
-- Custom error middleware with status code and message extraction
-- Client-side toast notifications for user feedback
-- File type and size validation before processing
+**Error Responses:**
+- 400: Invalid file type or missing file
+- 500: Image processing failed
 
-**Code Organization:**
-- Monorepo structure with clear separation: `client/`, `server/`, `shared/`
-- Path aliases for clean imports (@/, @shared/, @assets/)
-- Modular component architecture with separation of concerns
-
-## External Dependencies
-
-### Third-Party Services
-
-**Potential Integration Points:**
-- Neon Database: PostgreSQL serverless database (configured but not actively used)
-- Google Fonts: Inter font family for typography
-
-### Core Libraries
-
-**Image Processing:**
-- Sharp: High-performance Node.js image processing library for transformations
-
-**UI Framework:**
-- Radix UI: Headless component primitives for accessibility
-- Tailwind CSS: Utility-first CSS framework
-- Lucide React: Icon library
-
-**Backend Services:**
-- Express.js: Web application framework
-- Multer: File upload middleware
-
-**Development Tools:**
-- TypeScript: Type safety across full stack
-- Drizzle ORM: Type-safe database toolkit
-- Vite: Build tool with Replit-specific plugins (@replit/vite-plugin-runtime-error-modal, cartographer, dev-banner)
-
-### Database Schema
-
-**Configured (Not Currently Active):**
-- PostgreSQL via Neon serverless driver
-- Drizzle ORM for migrations and queries
-- Schema location: `shared/schema.ts`
-- Migration output: `./migrations` directory
-
-### API Integrations
-
-**Image Processing API:**
-- Endpoint: `POST /api/process`
-- Accepts: `multipart/form-data` with image file and JSON options
-- Returns: Binary image data as Blob
-- Processing options: format conversion, width/height, aspect ratio maintenance, background removal
+## Architecture Decisions
+- **Horizontal batching**: Built frontend and backend in layers for consistency
+- **Schema-first development**: Defined data models before implementation
+- **Component modularity**: Reusable components outside of App.tsx
+- **Memory safety**: Proper cleanup of object URLs and temporary files
+- **User feedback**: Toast notifications for all user actions
+- **Responsive design**: Mobile-first approach with desktop enhancements
