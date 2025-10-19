@@ -105,17 +105,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         image = image.removeAlpha().flatten({ background: { r: 255, g: 255, b: 255, alpha: 0 } });
       }
 
+      const quality = options.quality || 90;
+
       if (options.format) {
         switch (options.format) {
           case "jpg":
           case "jpeg":
-            image = image.jpeg({ quality: 90 });
+            image = image.jpeg({ quality });
             break;
           case "png":
-            image = image.png({ quality: 90 });
+            image = image.png({ quality });
             break;
           case "webp":
-            image = image.webp({ quality: 90 });
+            image = image.webp({ quality });
+            break;
+        }
+      } else {
+        const ext = path.extname(req.file.originalname).toLowerCase();
+        switch (ext) {
+          case ".jpg":
+          case ".jpeg":
+            image = image.jpeg({ quality });
+            break;
+          case ".png":
+            image = image.png({ quality });
+            break;
+          case ".webp":
+            image = image.webp({ quality });
             break;
         }
       }

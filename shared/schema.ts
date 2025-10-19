@@ -9,6 +9,7 @@ export const imageProcessingOptionsSchema = z.object({
   height: z.number().int().positive().optional(),
   removeBackground: z.boolean().optional(),
   maintainAspectRatio: z.boolean().optional(),
+  quality: z.number().int().min(1).max(100).optional(),
 });
 
 export type ImageProcessingOptions = z.infer<typeof imageProcessingOptionsSchema>;

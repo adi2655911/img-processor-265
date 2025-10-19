@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Wand2, RotateCcw, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import type { ImageMetadata, ImageProcessingOptions, SupportedFormat } from "@shared/schema";
 
 interface ProcessingControlsProps {
@@ -32,8 +33,22 @@ export function ProcessingControls({
   const [height, setHeight] = useState<number | undefined>(imageMetadata.height);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [removeBackground, setRemoveBackground] = useState(false);
+  const [quality, setQuality] = useState<number>(90);
 
   const aspectRatio = imageMetadata.width / imageMetadata.height;
+
+  const resetControls = () => {
+    setWidth(imageMetadata.width);
+    setHeight(imageMetadata.height);
+    setSelectedFormat(undefined);
+    setRemoveBackground(false);
+    setQuality(90);
+    setMaintainAspectRatio(true);
+  };
+
+  useEffect(() => {
+    resetControls();
+  }, [imageMetadata.filename]);
 
   const handleWidthChange = (value: string) => {
     const newWidth = value ? parseInt(value, 10) : undefined;
@@ -60,12 +75,13 @@ export function ProcessingControls({
       height,
       maintainAspectRatio,
       removeBackground,
+      quality,
     };
 
     onProcess(options);
   };
 
-  const hasChanges = selectedFormat || width !== imageMetadata.width || height !== imageMetadata.height || removeBackground;
+  const hasChanges = selectedFormat || width !== imageMetadata.width || height !== imageMetadata.height || removeBackground || quality !== 90;
 
   return (
     <div className="space-y-6">
@@ -174,6 +190,36 @@ export function ProcessingControls({
       <Separator />
 
       <div>
+        <h3 className="text-lg font-semibold mb-4">Image Quality</h3>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="quality">Quality: {quality}%</Label>
+              <span className="text-xs text-muted-foreground">
+                {quality >= 90 ? "High" : quality >= 70 ? "Medium" : "Low"}
+              </span>
+            </div>
+            <Slider
+              id="quality"
+              min={1}
+              max={100}
+              step={1}
+              value={[quality]}
+              onValueChange={(value) => setQuality(value[0])}
+              disabled={isProcessing}
+              className="w-full"
+              data-testid="slider-quality"
+            />
+            <p className="text-xs text-muted-foreground">
+              Lower quality reduces file size but may affect image clarity
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div>
         <h3 className="text-lg font-semibold mb-4">Advanced</h3>
         <div className="flex items-center justify-between p-4 rounded-md border border-border hover-elevate">
           <div className="flex items-center gap-3">
@@ -218,7 +264,10 @@ export function ProcessingControls({
 
         <Button
           variant="outline"
-          onClick={onReset}
+          onClick={() => {
+            resetControls();
+            onReset();
+          }}
           disabled={isProcessing}
           size="lg"
           data-testid="button-reset"
