@@ -147,7 +147,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (options.removeBackground) {
-        image = image.removeAlpha().flatten({ background: { r: 255, g: 255, b: 255, alpha: 0 } });
+  const { removeBackground } = await import("@imgly/background-removal");
+  const inputBuffer = await fs.readFile(inputPath);
+  const outputBuffer = await removeBackground(inputBuffer);
+  await fs.writeFile(inputPath, outputBuffer);
+  image = sharp(inputPath);
       }
 
       const quality = options.quality || 90;
