@@ -94,11 +94,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let image = sharp(inputPath);
 
+      if (options.crop) {
+        image = image.extract({
+          left: options.crop.x,
+          top: options.crop.y,
+          width: options.crop.width,
+          height: options.crop.height,
+        });
+      }
+
+      if (options.rotation) {
+        image = image.rotate(options.rotation, { background: { r: 255, g: 255, b: 255, alpha: 0 } });
+      }
+
       if (options.width || options.height) {
         image = image.resize(options.width, options.height, {
           fit: options.maintainAspectRatio ? "inside" : "fill",
           withoutEnlargement: false,
         });
+      }
+
+      if (options.filters) {
+        if (options.filters.grayscale) {
+          image = image.grayscale();
+        }
+        
+        if (options.filters.sepia) {
+          image = image.tint({ r: 112, g: 66, b: 20 });
+        }
+        
+        if (options.filters.blur && options.filters.blur > 0) {
+          image = image.blur(options.filters.blur / 10);
+        }
+        
+        if (options.filters.sharpen && options.filters.sharpen > 0) {
+          image = image.sharpen(options.filters.sharpen);
+        }
+      }
+
+      if (options.brightness !== undefined || options.contrast !== undefined) {
+        const brightness = options.brightness !== undefined ? options.brightness : 1;
+        const contrast = options.contrast !== undefined ? options.contrast : 1;
+        
+        image = image.modulate({
+          brightness: brightness,
+          saturation: 1,
+        });
+        
+        if (contrast !== 1) {
+          image = image.linear(contrast, -(128 * contrast) + 128);
+        }
       }
 
       if (options.removeBackground) {
