@@ -146,13 +146,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      if (options.removeBackground) {
+    if (options.removeBackground) {
   const { removeBackground } = await import("@imgly/background-removal");
   const inputBuffer = await fs.readFile(inputPath);
   const outputBuffer = await removeBackground(inputBuffer);
   await fs.writeFile(inputPath, outputBuffer);
   image = sharp(inputPath);
-      }
+    }
 
       const quality = options.quality || 90;
 
