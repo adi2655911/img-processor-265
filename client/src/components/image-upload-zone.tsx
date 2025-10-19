@@ -6,13 +6,15 @@ import type { ImageMetadata } from "@shared/schema";
 
 interface ImageUploadZoneProps {
   onFileUpload: (file: File, metadata: ImageMetadata) => void;
+  onMultipleFilesUpload?: (files: Array<{ file: File; metadata: ImageMetadata }>) => void;
   disabled?: boolean;
+  allowMultiple?: boolean;
 }
 
 const ACCEPTED_FORMATS = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-export function ImageUploadZone({ onFileUpload, disabled }: ImageUploadZoneProps) {
+export function ImageUploadZone({ onFileUpload, onMultipleFilesUpload, disabled, allowMultiple = false }: ImageUploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
 
@@ -77,18 +79,64 @@ export function ImageUploadZone({ onFileUpload, disabled }: ImageUploadZoneProps
   };
 
   const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
+    async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       setIsDragging(false);
 
       if (disabled) return;
 
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        validateAndProcessFile(file);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length === 0) return;
+
+      if (allowMultiple && files.length > 1 && onMultipleFilesUpload) {
+        const validFiles: Array<{ file: File; metadata: ImageMetadata }> = [];
+        
+        for (const file of files) {
+          if (!ACCEPTED_FORMATS.includes(file.type)) {
+            toast({
+              title: "Invalid file type",
+              description: `${file.name} is not a supported format.`,
+              variant: "destructive",
+            });
+            continue;
+          }
+
+          if (file.size > MAX_FILE_SIZE) {
+            toast({
+              title: "File too large",
+              description: `${file.name} exceeds 10MB limit.`,
+              variant: "destructive",
+            });
+            continue;
+          }
+
+          try {
+            const metadata = await getImageMetadata(file);
+            validFiles.push({ file, metadata });
+          } catch (error) {
+            toast({
+              title: "Upload failed",
+              description: `Failed to read ${file.name}.`,
+              variant: "destructive",
+            });
+          }
+        }
+
+        if (validFiles.length > 0) {
+          onMultipleFilesUpload(validFiles);
+          toast({
+            title: "Images uploaded",
+            description: `${validFiles.length} image(s) loaded successfully.`,
+          });
+        }
+      } else {
+        const file = files[0];
+        if (file) {
+          validateAndProcessFile(file);
+        }
       }
     },
-    [disabled]
+    [disabled, allowMultiple, onMultipleFilesUpload]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -101,10 +149,56 @@ export function ImageUploadZone({ onFileUpload, disabled }: ImageUploadZoneProps
     setIsDragging(false);
   }, []);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      validateAndProcessFile(file);
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+
+    if (allowMultiple && files.length > 1 && onMultipleFilesUpload) {
+      const validFiles: Array<{ file: File; metadata: ImageMetadata }> = [];
+      
+      for (const file of files) {
+        if (!ACCEPTED_FORMATS.includes(file.type)) {
+          toast({
+            title: "Invalid file type",
+            description: `${file.name} is not a supported format.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds 10MB limit.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        try {
+          const metadata = await getImageMetadata(file);
+          validFiles.push({ file, metadata });
+        } catch (error) {
+          toast({
+            title: "Upload failed",
+            description: `Failed to read ${file.name}.`,
+            variant: "destructive",
+          });
+        }
+      }
+
+      if (validFiles.length > 0) {
+        onMultipleFilesUpload(validFiles);
+        toast({
+          title: "Images uploaded",
+          description: `${validFiles.length} image(s) loaded successfully.`,
+        });
+      }
+    } else {
+      const file = files[0];
+      if (file) {
+        validateAndProcessFile(file);
+      }
     }
   };
 
@@ -127,6 +221,7 @@ export function ImageUploadZone({ onFileUpload, disabled }: ImageUploadZoneProps
         accept={ACCEPTED_FORMATS.join(",")}
         onChange={handleFileSelect}
         disabled={disabled}
+        multiple={allowMultiple}
         data-testid="input-file-upload"
       />
 
